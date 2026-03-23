@@ -31,12 +31,20 @@ async def start_cmd(client, message):
 
 @bot.on_chat_join_request()
 async def auto_welcome(client, message):
-    user = message.from_user
+   user = message.from_user
     await add_user(user.id)
+    welcome_text = (
+        f"Hey {user.first_name}! Welcome ❤️\n"
+        "Aapki join request approve ho jayegi soon ✅\n"
+        "Main channel join kar lo yaha:\n"
+        "https://t.me/+Pi6GvsfYlFUzZTg1\n"
+        "Updates miss mat karna! 🔥"
+    )
     try:
-        await bot.send_message(user.id, "Hey! Welcome ❤️\nJoin main channel: https://t.me/+Pi6GvsfYlFUzZTg1")
-    except: pass
-
+        await bot.send_message(user.id, welcome_text)
+    except:
+        pass
+        
 @bot.on_message(filters.command("approve") & filters.user(ADMIN_ID))
 async def approve_all(client, message):
     chat_id = message.chat.id
