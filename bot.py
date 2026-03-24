@@ -3,24 +3,19 @@ import sys
 import asyncio
 import threading
 from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from motor.motor_asyncio import AsyncIOMotorClient
 from flask import Flask
 
 # --- 🛠 STEP 1: CRITICAL BYPASS ---
 os.environ["PYROGRAM_COMPAT"] = "1"
 
-import asyncio
-import threading
-from pyrogram import Client, filters
-from motor.motor_asyncio import AsyncIOMotorClient
-from flask import Flask
-
 # --- 🌐 WEB SERVER ---
 web_app = Flask(__name__)
 
 @web_app.route('/')
 def home():
-    return "Savan Bot (Py 3.14) Active! 🚀"
+    return "Savan Approval Bot Active! 🚀"
 
 def run_web():
     port = int(os.environ.get("PORT", 8080))
@@ -35,45 +30,65 @@ MONGO_URL = os.environ.get("MONGO_URL")
 app = Client("SavanBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 db = AsyncIOMotorClient(MONGO_URL)["SavanDB"]["users"]
 
-# --- ✅ AUTO APPROVE LOGIC ---
-@app.on_chat_join_request()
-async def auto_approve(client, request):
-    chat_id = request.chat.id
-    user_id = request.from_user.id
-    user_name = request.from_user.first_name
+# --- 📊 START MESSAGE WITH BUTTONS ---
+START_TEXT = """
+**🚀 Savan High-Speed Join Request Manager**
 
-    try:
-        # 1. Sabse pehle approve karo
-        await client.approve_chat_join_request(chat_id, user_id)
-        
-        # 2. Database update karo (optional but good)
-        await db.update_one({"id": user_id}, {"$set": {"name": user_name}}, upsert=True)
-        
-        # 3. Welcome message bhejo
-        await client.send_message(user_id, f"Hello {user_name}! Your request to join has been approved ✅")
-        
-    except Exception as e:
-        print(f"Error in auto_approve: {e}")
+Welcome! I’m a professional bot designed to manage channel join requests at maximum speed.
+
+**Key Features:**
+• 📩 Auto-log all join requests
+• ⚡ Ultra-fast bulk approval
+• 🔄 Concurrent processing with retry logic
+• 📊 Real-time statistics
+• 🛡️ Rate limit protection
+
+**Owner:** @SAVAN_JOD
+
+Use the buttons below to explore my features!
+"""
+
+START_BUTTONS = InlineKeyboardMarkup([
+    [
+        InlineKeyboardButton("📊 Channel Stats", callback_data="stats"),
+        InlineKeyboardButton("➕ Add to Channel", url=f"https://t.me/your_bot_username?startchannel=true")
+    ],
+    [
+        InlineKeyboardButton("👤 Owner", url="https://t.me/SAVAN_JOD")
+    ],
+    [
+        InlineKeyboardButton("❓ Help", callback_data="help"),
+        InlineKeyboardButton("ℹ️ About", callback_data="about")
+    ]
+])
 
 @app.on_message(filters.command("start"))
 async def start(client, message):
-    await message.reply("Savan Approval Bot is Active on 3.14! ⚡")
+    await message.reply_photo(
+        photo="https://telegra.ph/file/your-image-link.jpg", # Yahan apni koi image link daal sakte hain
+        caption=START_TEXT,
+        reply_markup=START_BUTTONS
+    )
 
-# --- 🚀 ASYNC ENTRY POINT ---
+# --- ✅ AUTO APPROVE LOGIC ---
+@app.on_chat_join_request()
+async def auto_approve(client, request):
+    try:
+        await client.approve_chat_join_request(request.chat.id, request.from_user.id)
+        # Statistics update karne ke liye database mein entry
+        await db.update_one({"id": request.from_user.id}, {"$set": {"name": request.from_user.first_name}}, upsert=True)
+    except Exception as e:
+        print(f"Approve Error: {e}")
+
+# --- 🚀 STARTING LOGIC ---
 async def main():
-    # Flask thread start karein
     threading.Thread(target=run_web, daemon=True).start()
-    
-    # Bot start karein
     async with app:
-        print("✅ BOT STARTED SUCCESSFULLY ON PYTHON 3.14.3!")
+        print("✅ SAVAN BOT STARTED SUCCESSFULLY!")
         await asyncio.Event().wait()
 
 if __name__ == "__main__":
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(main())
+        asyncio.run(main())
     except KeyboardInterrupt:
         pass
-        
