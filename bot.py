@@ -8,38 +8,41 @@ from flask import Flask
 # --- WEB SERVER ---
 web_app = Flask(__name__)
 @web_app.route('/')
-def home(): return "Savan Professional Bot is Running! 🚀"
+def home(): return "Savan Professional Bot is Online! 🚀"
 
 def run_web():
     port = int(os.environ.get("PORT", 8080))
     web_app.run(host='0.0.0.0', port=port)
 
 # --- BOT CONFIG ---
-# Variables ko check karne ke liye print statement daala hai
-API_ID = os.environ.get("API_ID")
-API_HASH = os.environ.get("API_HASH")
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+API_ID = int(os.environ.get("API_ID", 0))
+API_HASH = os.environ.get("API_HASH", "")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
-app = Client(
-    "SavanBot",
-    api_id=int(API_ID) if API_ID else 0,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
-)
+app = Client("SavanBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# --- UI DESIGN (Screenshot Jaisa) ---
+# --- UI DESIGN ---
 START_TEXT = """
-**🚀 Savan High-Speed Join Request Manager**
+**🚀 High-Speed Join Request Manager**
 
 Welcome! I’m a professional bot designed to manage channel join requests at maximum speed.
 
+**Key Features:**
+• ⚡ **Ultra-fast** bulk approval
+• 🔄 **Concurrent processing**
+• 📊 **Real-time** statistics
+• 🛡️ **Rate limit** protection
+
 **Owner:** @SAVAN_JOD
-**Status:** `Active ✅`
+**Status:** `Running at Maximum Speed 🚀`
 """
 
 START_BUTTONS = InlineKeyboardMarkup([
-    [InlineKeyboardButton("📊 Stats", callback_data="stats"),
-     InlineKeyboardButton("👤 Owner", url="https://t.me/SAVAN_JOD")]
+    [
+        InlineKeyboardButton("📊 Channel Stats", callback_data="stats"),
+        InlineKeyboardButton("➕ Add to Channel", url=f"https://t.me/share/url?url=Admin+banayein+is+bot+ko")
+    ],
+    [InlineKeyboardButton("👤 Owner", url="https://t.me/SAVAN_JOD")]
 ])
 
 @app.on_message(filters.command("start") & filters.private)
@@ -50,16 +53,14 @@ async def start(client, message):
 async def auto_approve(client, request):
     try:
         await client.approve_chat_join_request(request.chat.id, request.from_user.id)
-        await client.send_message(request.from_user.id, "Approved! ✅")
     except Exception as e:
         print(f"Join Error: {e}")
 
 async def main():
     threading.Thread(target=run_web, daemon=True).start()
     try:
-        print("Bot is connecting to Telegram...")
         await app.start()
-        print("✅ SUCCESS: BOT IS CONNECTED TO TELEGRAM!")
+        print("✅ SUCCESS: BOT IS CONNECTED!")
         await asyncio.Event().wait()
     except Exception as e:
         print(f"❌ FATAL ERROR: {e}")
